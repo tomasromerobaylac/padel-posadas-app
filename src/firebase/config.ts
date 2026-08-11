@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence, type Auth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -13,6 +14,16 @@ export const firebaseConfig = {
 };
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+// FirebaseRecaptchaVerifierModal en web usa el SDK "compat" (firebase.auth()) por separado
+// del SDK modular de arriba; en nativo corre aislado dentro de un WebView y no lo necesita.
+if (Platform.OS === 'web') {
+  const firebaseCompat = require('firebase/compat/app');
+  require('firebase/compat/auth');
+  if (!firebaseCompat.default.apps.length) {
+    firebaseCompat.default.initializeApp(firebaseConfig);
+  }
+}
 
 // initializeAuth debe llamarse una sola vez; en Fast Refresh reusamos la instancia existente.
 let auth: Auth;
