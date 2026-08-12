@@ -4,6 +4,13 @@ const CATEGORY_LABELS: Record<Category, string> = {
   1: '1ra', 2: '2da', 3: '3ra', 4: '4ta', 5: '5ta', 6: '6ta', 7: '7ma', 8: '8va',
 };
 
+/** Formatea pesos argentinos manualmente (separador de miles con punto), sin depender de Intl. */
+export function formatPriceARS(amount: number): string {
+  const rounded = Math.round(amount);
+  const withThousands = rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `$${withThousands}`;
+}
+
 export function categoryLabel(c: Category): string {
   return CATEGORY_LABELS[c];
 }

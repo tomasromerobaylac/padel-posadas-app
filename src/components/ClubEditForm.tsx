@@ -9,6 +9,8 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
   const [description, setDescription] = useState(club.description ?? '');
   const [googleMapsUrl, setGoogleMapsUrl] = useState(club.googleMapsUrl ?? '');
   const [paymentAlias, setPaymentAlias] = useState(club.paymentAlias ?? '');
+  const [photoUrl, setPhotoUrl] = useState(club.photoUrl ?? '');
+  const [pricePerSlot, setPricePerSlot] = useState(club.pricePerSlot ? String(club.pricePerSlot) : '');
   const [amenities, setAmenities] = useState<ClubAmenities>(club.amenities ?? DEFAULT_AMENITIES);
   const [saving, setSaving] = useState(false);
 
@@ -23,6 +25,8 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
         description: description.trim(),
         googleMapsUrl: googleMapsUrl.trim(),
         paymentAlias: paymentAlias.trim(),
+        photoUrl: photoUrl.trim(),
+        ...(pricePerSlot.trim() ? { pricePerSlot: Number(pricePerSlot.trim()) } : {}),
         amenities,
       });
       onSaved();
@@ -51,6 +55,28 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
         autoCapitalize="none"
         value={googleMapsUrl}
         onChangeText={setGoogleMapsUrl}
+      />
+
+      <Text style={styles.label}>Foto del club</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Pegá el link de una foto (Google Fotos, Drive, etc.)"
+        autoCapitalize="none"
+        value={photoUrl}
+        onChangeText={setPhotoUrl}
+      />
+      <Text style={[styles.hint, { marginTop: 4 }]}>
+        Por ahora no se puede subir la foto directo desde la app (requiere plan pago de Firebase). Subila a Google
+        Fotos, Drive o similar, generá un link público y pegalo acá.
+      </Text>
+
+      <Text style={styles.label}>Precio del turno ({club.slotDurationMinutes} min)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="60000"
+        keyboardType="numeric"
+        value={pricePerSlot}
+        onChangeText={setPricePerSlot}
       />
 
       <Text style={styles.label}>Alias o CBU para transferencias</Text>
@@ -89,8 +115,7 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
       </View>
 
       <Text style={styles.hint}>
-        Fotos y mapa de distribución de canchas van a estar disponibles cuando pasemos al plan pago de Firebase
-        (Storage lo requiere).
+        El mapa de distribución de canchas va a estar disponible cuando pasemos al plan pago de Firebase.
       </Text>
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>

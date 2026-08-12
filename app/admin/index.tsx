@@ -77,6 +77,7 @@ export default function AdminScreen() {
         aliases: [],
         address: newClubAddress.trim(),
         slotDurationMinutes: 120,
+        pricePerSlot: 60000,
         ownerUserId: null,
         createdAt: Date.now(),
       });

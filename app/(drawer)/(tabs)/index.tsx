@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { useClubsById } from '../../../src/data/clubsCache';
 import { getEvent, getOpenEvents, joinEvent } from '../../../src/data/eventsRepo';
@@ -8,6 +8,7 @@ import { listOpenCourtPosts } from '../../../src/data/courtPostsRepo';
 import { listInvitesForUser, respondInvite } from '../../../src/data/invitesRepo';
 import { EventCard } from '../../../src/components/EventCard';
 import { CourtPostCard } from '../../../src/components/CourtPostCard';
+import { ClubCard } from '../../../src/components/ClubCard';
 import { formatSlot } from '../../../src/utils/format';
 import type { CourtPost, Invite, PadelEvent } from '../../../src/types/domain';
 
@@ -21,6 +22,19 @@ export default function HomeScreen() {
   const [invites, setInvites] = useState<(Invite & { eventInfo?: PadelEvent })[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [clubSearch, setClubSearch] = useState('');
+
+  const clubs = useMemo(
+    () => Object.values(clubsById).sort((a, b) => a.name.localeCompare(b.name)),
+    [clubsById]
+  );
+  const filteredClubs = useMemo(() => {
+    const q = clubSearch.trim().toLowerCase();
+    if (!q) return clubs;
+    return clubs.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.aliases.some((a) => a.toLowerCase().includes(q))
+    );
+  }, [clubs, clubSearch]);
 
   const load = useCallback(async () => {
     try {
@@ -86,6 +100,22 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         >
+          <Text style={styles.sectionTitle}>Canchas</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar cancha por nombre..."
+            value={clubSearch}
+            onChangeText={setClubSearch}
+          />
+          {filteredClubs.length === 0 && (
+            <Text style={styles.empty}>
+              {clubSearch ? 'No encontramos ninguna cancha con ese nombre.' : 'Todavía no hay canchas cargadas.'}
+            </Text>
+          )}
+          {filteredClubs.map((club) => (
+            <ClubCard key={club.id} club={club} onPress={() => router.push(`/club/${club.id}`)} />
+          ))}
+
           {invites.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>Te invitaron</Text>
@@ -138,6 +168,16 @@ const styles = StyleSheet.create({
   actionBtnSecondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#1b7f3a' },
   actionBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   actionBtnTextSecondary: { color: '#1b7f3a' },
+  searchInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    marginBottom: 10,
+  },
   scrollContent: { padding: 16, paddingTop: 8 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginTop: 12, marginBottom: 8 },
   empty: { color: '#888', fontSize: 13, marginBottom: 12 },

@@ -51,6 +51,10 @@ export interface Club {
   amenities?: ClubAmenities;
   // Alias/CBU para transferencia directa (cada jugador paga su parte sin pasar por la cantina).
   paymentAlias?: string;
+  // Link a una foto ya alojada en otro lado (no subida a la app, Storage requiere plan pago).
+  photoUrl?: string;
+  // Precio del turno completo (slotDurationMinutes), en pesos argentinos.
+  pricePerSlot?: number;
 }
 
 export interface ClubOwnerRequest {

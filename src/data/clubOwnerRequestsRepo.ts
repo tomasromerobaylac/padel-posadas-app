@@ -56,6 +56,7 @@ export async function approveClubOwnerRequest(
     aliases: [],
     address: request.clubAddress,
     slotDurationMinutes: 120,
+    pricePerSlot: 60000,
     ownerUserId: request.requesterUserId,
     createdAt: Date.now(),
   });

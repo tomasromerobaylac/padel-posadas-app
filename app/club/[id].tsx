@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getClub } from '../../src/data/clubsRepo';
+import { formatPriceARS } from '../../src/utils/format';
 import type { Club } from '../../src/types/domain';
 
 export default function ClubDetailScreen() {
@@ -39,8 +40,16 @@ export default function ClubDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {club.photoUrl && <Image source={{ uri: club.photoUrl }} style={styles.photo} resizeMode="cover" />}
+
       <Text style={styles.title}>{club.name}</Text>
       <Text style={styles.address}>{club.address}</Text>
+
+      {club.pricePerSlot ? (
+        <Text style={styles.price}>
+          {formatPriceARS(club.pricePerSlot)} <Text style={styles.priceUnit}>/ turno de {club.slotDurationMinutes} min</Text>
+        </Text>
+      ) : null}
 
       {club.googleMapsUrl && (
         <TouchableOpacity onPress={() => Linking.openURL(club.googleMapsUrl!)}>
@@ -66,8 +75,11 @@ export default function ClubDetailScreen() {
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 4, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  photo: { width: '100%', height: 180, borderRadius: 14, marginBottom: 14 },
   title: { fontSize: 22, fontWeight: '700' },
   address: { fontSize: 14, color: '#555', marginTop: 4 },
+  price: { fontSize: 16, fontWeight: '700', color: '#1b7f3a', marginTop: 8 },
+  priceUnit: { fontSize: 12, fontWeight: '400', color: '#888' },
   mapsLink: { color: '#1565c0', fontWeight: '600', marginTop: 8 },
   description: { fontSize: 14, color: '#333', marginTop: 14, lineHeight: 20 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 },
