@@ -1,74 +1,104 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { PhoneAuthProvider } from 'firebase/auth';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { auth, firebaseConfig } from '../../src/firebase/config';
-import { setPendingVerification } from '../../src/auth/phoneAuthFlow';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../src/firebase/config';
 
 export default function LoginScreen() {
-  const [localNumber, setLocalNumber] = useState('');
-  const [sending, setSending] = useState(false);
-  const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
-  const router = useRouter();
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  async function handleSendCode() {
-    const digits = localNumber.replace(/\D/g, '');
-    if (digits.length < 8) {
-      Alert.alert('Número inválido', 'Ingresá tu número con característica, sin el 0 ni el 15 (ej: 3764501234).');
+  async function handleSubmit() {
+    if (!email.trim() || !password) {
+      Alert.alert('Faltan datos', 'Ingresá tu email y contraseña.');
       return;
     }
-    const phoneNumber = `+549${digits}`;
-
-    setSending(true);
+    setSubmitting(true);
     try {
-      const provider = new PhoneAuthProvider(auth);
-      const verificationId = await provider.verifyPhoneNumber(phoneNumber, recaptchaVerifier.current!);
-      setPendingVerification(verificationId, phoneNumber);
-      router.push('/verify');
+      if (mode === 'login') {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
+      }
+      // La navegación post-login la resuelve el AuthGate en app/_layout.tsx
     } catch (err: any) {
-      Alert.alert('No se pudo enviar el código', err?.message ?? 'Intentá de nuevo.');
+      Alert.alert(mode === 'login' ? 'No se pudo iniciar sesión' : 'No se pudo crear la cuenta', translateAuthError(err?.code));
     } finally {
-      setSending(false);
+      setSubmitting(false);
     }
   }
 
   return (
     <View style={styles.container}>
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={firebaseConfig}
-        attemptInvisibleVerification
-      />
       <Text style={styles.title}>Pádel Posadas</Text>
-      <Text style={styles.subtitle}>Ingresá con tu número, como en WhatsApp</Text>
+      <Text style={styles.subtitle}>
+        {mode === 'login' ? 'Ingresá con tu email' : 'Creá tu cuenta con email y contraseña'}
+      </Text>
 
-      <View style={styles.phoneRow}>
-        <Text style={styles.prefix}>+54 9</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="3764 501234"
-          keyboardType="phone-pad"
-          value={localNumber}
-          onChangeText={setLocalNumber}
-          autoFocus
-        />
-      </View>
+      <TextInput
+        style={styles.input}
+        placeholder="tu@email.com"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Contraseña"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
 
-      <TouchableOpacity style={styles.button} onPress={handleSendCode} disabled={sending}>
-        {sending ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Enviar código</Text>}
+      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>
+        {submitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>{mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</Text>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
+        <Text style={styles.switchText}>
+          {mode === 'login' ? '¿No tenés cuenta? Creá una' : '¿Ya tenés cuenta? Ingresá'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
+}
+
+function translateAuthError(code?: string): string {
+  switch (code) {
+    case 'auth/invalid-email':
+      return 'El email no es válido.';
+    case 'auth/email-already-in-use':
+      return 'Ya existe una cuenta con ese email.';
+    case 'auth/weak-password':
+      return 'La contraseña tiene que tener al menos 6 caracteres.';
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+      return 'Email o contraseña incorrectos.';
+    default:
+      return 'Intentá de nuevo.';
+  }
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 24 },
-  phoneRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ccc', borderRadius: 10 },
-  prefix: { paddingLeft: 14, paddingRight: 4, fontSize: 16, color: '#333' },
-  input: { flex: 1, paddingVertical: 14, paddingRight: 14, fontSize: 16 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    fontSize: 16,
+  },
   button: { backgroundColor: '#1b7f3a', borderRadius: 10, paddingVertical: 14, marginTop: 16, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  switchText: { color: '#1b7f3a', textAlign: 'center', marginTop: 16, fontSize: 14 },
 });

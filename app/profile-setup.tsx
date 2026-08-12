@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../src/auth/AuthContext';
 import { createUser } from '../src/data/usersRepo';
 import { listClubs } from '../src/data/clubsRepo';
+import { categoryLabel } from '../src/utils/format';
 import type { Category, Club, Gender } from '../src/types/domain';
 
 const CATEGORIES: Category[] = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -21,16 +22,10 @@ const GENDERS: { value: Gender; label: string }[] = [
   { value: 'otro', label: 'Otro' },
 ];
 
-function categoryLabel(c: Category) {
-  const ordinals: Record<Category, string> = {
-    1: '1ra', 2: '2da', 3: '3ra', 4: '4ta', 5: '5ta', 6: '6ta', 7: '7ma', 8: '8va',
-  };
-  return ordinals[c];
-}
-
 export default function ProfileSetupScreen() {
   const { firebaseUser, refreshAppUser } = useAuth();
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [gender, setGender] = useState<Gender>('masculino');
   const [categoryMin, setCategoryMin] = useState<Category>(6);
   const [categoryMax, setCategoryMax] = useState<Category>(6);
@@ -56,6 +51,10 @@ export default function ProfileSetupScreen() {
       Alert.alert('Falta tu nombre', 'Ingresá cómo querés que te vean los demás jugadores.');
       return;
     }
+    if (!phone.trim()) {
+      Alert.alert('Falta tu teléfono', 'Lo van a necesitar los demás jugadores para coordinar por WhatsApp.');
+      return;
+    }
     if (categoryMin > categoryMax) {
       Alert.alert('Categoría inválida', 'La categoría mínima no puede ser mayor que la máxima.');
       return;
@@ -66,7 +65,7 @@ export default function ProfileSetupScreen() {
       await createUser({
         id: firebaseUser.uid,
         name: name.trim(),
-        phone: firebaseUser.phoneNumber ?? '',
+        phone: phone.trim(),
         category: { min: categoryMin, max: categoryMax },
         gender,
         homeClubIds,
@@ -87,6 +86,15 @@ export default function ProfileSetupScreen() {
 
       <Text style={styles.label}>Nombre</Text>
       <TextInput style={styles.input} placeholder="Tu nombre" value={name} onChangeText={setName} />
+
+      <Text style={styles.label}>Teléfono</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="+54 9 3764 501234"
+        keyboardType="phone-pad"
+        value={phone}
+        onChangeText={setPhone}
+      />
 
       <Text style={styles.label}>Género</Text>
       <View style={styles.chipsRow}>
