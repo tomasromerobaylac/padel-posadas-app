@@ -29,6 +29,10 @@ export default function ProfileScreen() {
       </Text>
       <Text style={styles.detail}>Género: {appUser.gender}</Text>
 
+      <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/friends')}>
+        <Text style={styles.linkButtonText}>Amigos</Text>
+      </TouchableOpacity>
+
       {appUser.role !== 'club_owner' && (
         <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/club-owner-request')}>
           <Text style={styles.linkButtonText}>Sumar mi cancha</Text>
