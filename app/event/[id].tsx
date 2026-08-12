@@ -137,7 +137,9 @@ export default function EventDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.club}>{club?.name ?? 'Club'}</Text>
+      <TouchableOpacity onPress={() => router.push(`/club/${event.clubId}`)}>
+        <Text style={styles.club}>{club?.name ?? 'Club'} ›</Text>
+      </TouchableOpacity>
       <Text style={styles.slot}>{formatSlot(event.slotStart, event.slotEnd)}</Text>
 
       <View style={styles.tagsRow}>

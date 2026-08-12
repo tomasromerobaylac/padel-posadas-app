@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
+import { ClubEditForm } from '../../src/components/ClubEditForm';
 import { listClubs, createClub } from '../../src/data/clubsRepo';
 import {
   approveClubOwnerRequest,
@@ -20,6 +21,7 @@ export default function AdminScreen() {
   const [newClubName, setNewClubName] = useState('');
   const [newClubAddress, setNewClubAddress] = useState('');
   const [creatingClub, setCreatingClub] = useState(false);
+  const [infoEditClub, setInfoEditClub] = useState<Club | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -153,11 +155,36 @@ export default function AdminScreen() {
       <Text style={styles.sectionTitle}>Clubes ({clubs.length})</Text>
       {clubs.map((club) => (
         <View key={club.id} style={styles.card}>
-          <Text style={styles.cardTitle}>{club.name}</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>{club.name}</Text>
+            <TouchableOpacity onPress={() => setInfoEditClub(club)}>
+              <Text style={styles.editText}>Fotos e info</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.cardDetail}>{club.address}</Text>
           <Text style={styles.cardDetail}>Turno: {club.slotDurationMinutes} min</Text>
         </View>
       ))}
+
+      <Modal visible={!!infoEditClub} animationType="slide" onRequestClose={() => setInfoEditClub(null)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.sectionTitle}>Fotos e info</Text>
+            <TouchableOpacity onPress={() => setInfoEditClub(null)}>
+              <Text style={styles.editText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+          {infoEditClub && (
+            <ClubEditForm
+              club={infoEditClub}
+              onSaved={() => {
+                setInfoEditClub(null);
+                load();
+              }}
+            />
+          )}
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -176,8 +203,11 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
     gap: 4,
   },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: 16, fontWeight: '700' },
   cardDetail: { fontSize: 13, color: '#555' },
+  editText: { color: '#1b7f3a', fontWeight: '600', fontSize: 13 },
+  modalContainer: { flex: 1, padding: 20, paddingTop: 60 },
   cardActions: { flexDirection: 'row', gap: 8, marginTop: 8 },
   smallButton: { flex: 1, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   approveButton: { backgroundColor: '#1b7f3a' },

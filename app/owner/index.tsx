@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
+import { ClubEditForm } from '../../src/components/ClubEditForm';
 import { listClubsOwnedBy, updateClub } from '../../src/data/clubsRepo';
 import { listEventsByClub } from '../../src/data/eventsRepo';
 import { listCourtPostsByClub } from '../../src/data/courtPostsRepo';
@@ -18,6 +19,7 @@ export default function OwnerScreen() {
   const [editAddress, setEditAddress] = useState('');
   const [editSlotMinutes, setEditSlotMinutes] = useState('120');
   const [saving, setSaving] = useState(false);
+  const [infoEditClub, setInfoEditClub] = useState<Club | null>(null);
 
   const load = useCallback(async () => {
     if (!appUser) return;
@@ -124,9 +126,14 @@ export default function OwnerScreen() {
             <>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{club.name}</Text>
-                <TouchableOpacity onPress={() => startEditing(club)}>
-                  <Text style={styles.editText}>Editar</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 14 }}>
+                  <TouchableOpacity onPress={() => setInfoEditClub(club)}>
+                    <Text style={styles.editText}>Fotos e info</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => startEditing(club)}>
+                    <Text style={styles.editText}>Editar</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               <Text style={styles.cardDetail}>{club.address}</Text>
               <Text style={styles.cardDetail}>Turno: {club.slotDurationMinutes} min</Text>
@@ -150,6 +157,26 @@ export default function OwnerScreen() {
           ))}
         </View>
       ))}
+
+      <Modal visible={!!infoEditClub} animationType="slide" onRequestClose={() => setInfoEditClub(null)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.title}>Fotos e info</Text>
+            <TouchableOpacity onPress={() => setInfoEditClub(null)}>
+              <Text style={styles.editText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+          {infoEditClub && (
+            <ClubEditForm
+              club={infoEditClub}
+              onSaved={() => {
+                setInfoEditClub(null);
+                load();
+              }}
+            />
+          )}
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -180,4 +207,6 @@ const styles = StyleSheet.create({
   cancelText: { color: '#888', fontWeight: '600' },
   sectionTitle: { fontSize: 14, fontWeight: '700', marginTop: 12 },
   bookingRow: { fontSize: 13, color: '#333', marginTop: 2 },
+  modalContainer: { flex: 1, padding: 20, paddingTop: 60 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
 });

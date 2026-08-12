@@ -29,6 +29,12 @@ export interface AppUser {
   createdAt: number;
 }
 
+export interface ClubAmenities {
+  ventaAccesorios: boolean;
+  parrillas: boolean;
+  cantina: boolean;
+}
+
 export interface Club {
   id: string;
   name: string;
@@ -39,6 +45,9 @@ export interface Club {
   slotDurationMinutes: number; // 120 por defecto
   ownerUserId?: string | null;
   createdAt: number;
+  description?: string;
+  googleMapsUrl?: string;
+  amenities?: ClubAmenities;
 }
 
 export interface ClubOwnerRequest {
