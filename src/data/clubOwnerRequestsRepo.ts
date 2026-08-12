@@ -1,5 +1,7 @@
 import { addDoc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import { typedCollection, typedDoc } from './firestoreHelpers';
+import { createClub } from './clubsRepo';
+import { updateUser } from './usersRepo';
 import type { ClubOwnerRequest } from '../types/domain';
 
 const path = 'clubOwnerRequests';
@@ -27,4 +29,30 @@ export async function reviewClubOwnerRequest(
   reviewedByUserId: string
 ): Promise<void> {
   await updateDoc(typedDoc<ClubOwnerRequest>(path, requestId), { status, reviewedByUserId });
+}
+
+/**
+ * Crea el club a partir de los datos de la solicitud, vincula al solicitante como
+ * club_owner de ese club, y marca la solicitud como aprobada. Solo puede ejecutarlo
+ * un admin (las security rules restringen la creación de clubes y el cambio de rol).
+ */
+export async function approveClubOwnerRequest(
+  request: ClubOwnerRequest,
+  adminUserId: string
+): Promise<string> {
+  const clubId = await createClub({
+    name: request.clubName,
+    aliases: [],
+    address: request.clubAddress,
+    slotDurationMinutes: 120,
+    ownerUserId: request.requesterUserId,
+    createdAt: Date.now(),
+  });
+  await updateUser(request.requesterUserId, { role: 'club_owner' });
+  await reviewClubOwnerRequest(request.id, 'approved', adminUserId);
+  return clubId;
+}
+
+export async function rejectClubOwnerRequest(requestId: string, adminUserId: string): Promise<void> {
+  await reviewClubOwnerRequest(requestId, 'rejected', adminUserId);
 }
