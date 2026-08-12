@@ -1,28 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
 import { listClubs } from '../../src/data/clubsRepo';
-import { createEvent } from '../../src/data/eventsRepo';
-import { scheduleEventReminders } from '../../src/notifications/reminders';
-import { categoryLabel, dayLabel, generateDaySlots, nextDays } from '../../src/utils/format';
-import type { Category, Club, EventMode, MatchType } from '../../src/types/domain';
+import { createCourtPost } from '../../src/data/courtPostsRepo';
+import { dayLabel, generateDaySlots, nextDays } from '../../src/utils/format';
+import type { Club } from '../../src/types/domain';
 
-const CATEGORIES: Category[] = [1, 2, 3, 4, 5, 6, 7, 8];
-const MATCH_TYPES: MatchType[] = ['masculino', 'femenino', 'mixto', 'indistinto'];
 type BookingType = 'turno' | 'clase';
 const CLASS_DURATION_MINUTES = 60;
 
-export default function CreateEventScreen() {
+export default function CreateCourtPostScreen() {
   const { appUser } = useAuth();
   const router = useRouter();
 
@@ -32,12 +20,6 @@ export default function CreateEventScreen() {
   const [bookingType, setBookingType] = useState<BookingType>('turno');
   const [dayIndex, setDayIndex] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState<{ slotStart: number; slotEnd: number } | null>(null);
-  const [courtsReserved, setCourtsReserved] = useState(1);
-  const [totalSlots, setTotalSlots] = useState(4);
-  const [categoryMin, setCategoryMin] = useState<Category>(6);
-  const [categoryMax, setCategoryMax] = useState<Category>(6);
-  const [matchType, setMatchType] = useState<MatchType>('indistinto');
-  const [mode, setMode] = useState<EventMode>('individual');
   const [saving, setSaving] = useState(false);
 
   const days = useMemo(() => nextDays(14), []);
@@ -62,42 +44,28 @@ export default function CreateEventScreen() {
     setSelectedSlot(null);
   }, [clubId, dayIndex, bookingType]);
 
-  async function handleCreate() {
+  async function handlePublish() {
     if (!appUser) return;
     if (!clubId) {
       Alert.alert('Elegí un club', 'Todavía no hay clubes cargados para elegir.');
       return;
     }
     if (!selectedSlot) {
-      Alert.alert('Elegí un turno', 'Seleccioná el horario del partido.');
-      return;
-    }
-    if (categoryMin > categoryMax) {
-      Alert.alert('Categoría inválida', 'La categoría mínima no puede ser mayor que la máxima.');
+      Alert.alert('Elegí un turno', 'Seleccioná el horario libre.');
       return;
     }
 
     setSaving(true);
     try {
-      const eventId = await createEvent({
-        organizerUserId: appUser.id,
+      await createCourtPost({
+        publishedByUserId: appUser.id,
         clubId,
         slotStart: selectedSlot.slotStart,
         slotEnd: selectedSlot.slotEnd,
-        courtsReserved,
-        totalSlots,
-        categoryRange: { min: categoryMin, max: categoryMax },
-        matchType,
-        mode,
-        inviteLinkToken: Math.random().toString(36).slice(2, 10),
       });
-      scheduleEventReminders(
-        { id: eventId, slotStart: selectedSlot.slotStart, slotEnd: selectedSlot.slotEnd },
-        selectedClub?.name ?? 'tu club'
-      ).catch(() => {});
-      router.replace(`/event/${eventId}`);
+      router.back();
     } catch (err: any) {
-      Alert.alert('No se pudo crear el partido', err?.message ?? 'Intentá de nuevo.');
+      Alert.alert('No se pudo publicar', err?.message ?? 'Intentá de nuevo.');
     } finally {
       setSaving(false);
     }
@@ -167,7 +135,7 @@ export default function CreateEventScreen() {
         </View>
       </ScrollView>
 
-      <Text style={styles.label}>Turno</Text>
+      <Text style={styles.label}>Turno libre</Text>
       <View style={styles.chipsRow}>
         {slots.map((slot) => (
           <TouchableOpacity
@@ -184,72 +152,8 @@ export default function CreateEventScreen() {
         ))}
       </View>
 
-      <Text style={styles.label}>Cantidad de canchas</Text>
-      <View style={styles.chipsRow}>
-        {[1, 2, 3].map((n) => (
-          <TouchableOpacity
-            key={n}
-            style={[styles.chip, courtsReserved === n && styles.chipSelected]}
-            onPress={() => {
-              setCourtsReserved(n);
-              setTotalSlots(n * 4);
-            }}
-          >
-            <Text style={[styles.chipText, courtsReserved === n && styles.chipTextSelected]}>{n}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.label}>Cupo total (jugadores)</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="number-pad"
-        value={String(totalSlots)}
-        onChangeText={(v) => setTotalSlots(Number(v.replace(/\D/g, '')) || 0)}
-      />
-
-      <Text style={styles.label}>Modalidad</Text>
-      <View style={styles.chipsRow}>
-        <TouchableOpacity
-          style={[styles.chip, mode === 'individual' && styles.chipSelected]}
-          onPress={() => setMode('individual')}
-        >
-          <Text style={[styles.chipText, mode === 'individual' && styles.chipTextSelected]}>Individual</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.chip, mode === 'pareja' && styles.chipSelected]} onPress={() => setMode('pareja')}>
-          <Text style={[styles.chipText, mode === 'pareja' && styles.chipTextSelected]}>Por pareja</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.label}>Tipo</Text>
-      <View style={styles.chipsRow}>
-        {MATCH_TYPES.map((t) => (
-          <TouchableOpacity key={t} style={[styles.chip, matchType === t && styles.chipSelected]} onPress={() => setMatchType(t)}>
-            <Text style={[styles.chipText, matchType === t && styles.chipTextSelected]}>{t}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.label}>Categoría</Text>
-      <Text style={styles.sublabel}>Desde</Text>
-      <View style={styles.chipsRow}>
-        {CATEGORIES.map((c) => (
-          <TouchableOpacity key={`min-${c}`} style={[styles.chip, categoryMin === c && styles.chipSelected]} onPress={() => setCategoryMin(c)}>
-            <Text style={[styles.chipText, categoryMin === c && styles.chipTextSelected]}>{categoryLabel(c)}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <Text style={styles.sublabel}>Hasta</Text>
-      <View style={styles.chipsRow}>
-        {CATEGORIES.map((c) => (
-          <TouchableOpacity key={`max-${c}`} style={[styles.chip, categoryMax === c && styles.chipSelected]} onPress={() => setCategoryMax(c)}>
-            <Text style={[styles.chipText, categoryMax === c && styles.chipTextSelected]}>{categoryLabel(c)}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity style={styles.button} onPress={handleCreate} disabled={saving}>
-        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Crear partido</Text>}
+      <TouchableOpacity style={styles.button} onPress={handlePublish} disabled={saving}>
+        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Publicar cancha</Text>}
       </TouchableOpacity>
     </ScrollView>
   );
@@ -260,14 +164,12 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyText: { textAlign: 'center', color: '#666' },
   label: { fontSize: 15, fontWeight: '600', marginTop: 16 },
-  sublabel: { fontSize: 13, color: '#666', marginTop: 6 },
   daysScroll: { marginTop: 6 },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1, borderColor: '#ccc' },
-  chipSelected: { backgroundColor: '#1b7f3a', borderColor: '#1b7f3a' },
+  chipSelected: { backgroundColor: '#1565c0', borderColor: '#1565c0' },
   chipText: { color: '#333' },
   chipTextSelected: { color: '#fff', fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 10, padding: 12, fontSize: 16, marginTop: 6, width: 100 },
-  button: { backgroundColor: '#1b7f3a', borderRadius: 10, paddingVertical: 14, marginTop: 28, alignItems: 'center' },
+  button: { backgroundColor: '#1565c0', borderRadius: 10, paddingVertical: 14, marginTop: 28, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

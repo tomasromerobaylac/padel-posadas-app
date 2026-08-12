@@ -14,13 +14,18 @@ export function categoryRangeLabel(range: CategoryRange): string {
     : `${categoryLabel(range.min)}-${categoryLabel(range.max)}`;
 }
 
+/** Formatea en 24hs manualmente: el Intl de Hermes en dispositivos reales no siempre respeta hour12:false. */
+export function formatTime24(date: Date): string {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 export function formatSlot(slotStart: number, slotEnd: number): string {
   const start = new Date(slotStart);
   const end = new Date(slotEnd);
   const dateStr = start.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
-  const startHour = start.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  const endHour = end.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  return `${dateStr} · ${startHour}-${endHour}`;
+  return `${dateStr} · ${formatTime24(start)}-${formatTime24(end)}`;
 }
 
 const MATCH_TYPE_LABELS: Record<string, string> = {
@@ -50,7 +55,7 @@ export function dayLabel(date: Date): string {
   return date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-/** Turnos de duración fija dentro de una franja horaria habitual de club (8:00 a 23:00). */
+/** Turnos de duración fija dentro de una franja horaria habitual de club (8:00 a 00:00). */
 export function generateDaySlots(
   date: Date,
   slotDurationMinutes: number
@@ -59,14 +64,14 @@ export function generateDaySlots(
   const dayStart = new Date(date);
   dayStart.setHours(8, 0, 0, 0);
   const dayEnd = new Date(date);
-  dayEnd.setHours(23, 0, 0, 0);
+  dayEnd.setHours(24, 0, 0, 0); // 00:00 del día siguiente, para que el último turno llegue hasta medianoche
 
   let cursor = dayStart.getTime();
   while (cursor + slotDurationMinutes * 60_000 <= dayEnd.getTime()) {
     const slotStart = cursor;
     const slotEnd = cursor + slotDurationMinutes * 60_000;
-    const startLabel = new Date(slotStart).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-    const endLabel = new Date(slotEnd).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    const startLabel = formatTime24(new Date(slotStart));
+    const endLabel = formatTime24(new Date(slotEnd));
     slots.push({ slotStart, slotEnd, label: `${startLabel}-${endLabel}` });
     cursor = slotEnd;
   }
