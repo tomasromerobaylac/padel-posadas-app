@@ -30,9 +30,17 @@ export default function ProfileScreen() {
       <Text style={styles.detail}>Género: {appUser.gender}</Text>
 
       {appUser.role !== 'club_owner' && (
-        <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/club-owner-request')}>
-          <Text style={styles.linkButtonText}>Sumar mi cancha</Text>
-        </TouchableOpacity>
+        <View style={styles.partnerCard}>
+          <Text style={styles.partnerBadge}>🎾 PARA CLUBES</Text>
+          <Text style={styles.partnerTitle}>¿Tenés tu propia cancha?</Text>
+          <Text style={styles.partnerSubtitle}>
+            Hacete socio de Pádel Posadas y dejá que los jugadores de la ciudad encuentren y reserven tus turnos
+            directamente desde la app.
+          </Text>
+          <TouchableOpacity style={styles.partnerButton} onPress={() => router.push('/club-owner-request')}>
+            <Text style={styles.partnerButtonText}>Quiero ser socio</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {appUser.role === 'club_owner' && (
@@ -67,6 +75,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkButtonText: { color: '#1b7f3a', fontWeight: '600' },
+  partnerCard: {
+    marginTop: 20,
+    backgroundColor: '#eefaf1',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#cdeed8',
+    padding: 18,
+  },
+  partnerBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1b7f3a',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  partnerTitle: { fontSize: 18, fontWeight: '700', color: '#123d22' },
+  partnerSubtitle: { fontSize: 13, color: '#3f6b4d', marginTop: 6, lineHeight: 19 },
+  partnerButton: {
+    marginTop: 14,
+    backgroundColor: '#1b7f3a',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  partnerButtonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   button: {
     marginTop: 24,
     borderRadius: 10,
