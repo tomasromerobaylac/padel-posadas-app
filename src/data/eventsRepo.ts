@@ -1,5 +1,6 @@
 import {
   addDoc,
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -33,13 +34,14 @@ export async function getEvent(eventId: string): Promise<PadelEvent | null> {
 }
 
 export async function createEvent(
-  event: Omit<PadelEvent, 'id' | 'filledSlots' | 'status' | 'createdAt'>
+  event: Omit<PadelEvent, 'id' | 'filledSlots' | 'status' | 'createdAt' | 'participantUserIds'>
 ): Promise<string> {
   const ref = await addDoc(typedCollection<PadelEvent>(path), {
     ...event,
     filledSlots: 0,
     status: 'abierto',
     createdAt: Date.now(),
+    participantUserIds: [event.organizerUserId],
   } as PadelEvent);
   return ref.id;
 }
@@ -84,6 +86,7 @@ export async function joinEvent(
     tx.update(eventRef, {
       filledSlots: increment(slotsToFill),
       status: newFilled >= event.totalSlots ? 'completo' : 'abierto',
+      ...(participant.userId ? { participantUserIds: arrayUnion(participant.userId) } : {}),
     });
   });
 }

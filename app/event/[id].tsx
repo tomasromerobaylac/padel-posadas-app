@@ -212,6 +212,16 @@ export default function EventDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
+      {(alreadyJoined || event.organizerUserId === appUser?.id) && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={[styles.button, styles.buttonSecondary]}
+            onPress={() => router.push(`/event-chat/${event.id}`)}
+          >
+            <Text style={[styles.buttonText, styles.buttonTextSecondary]}>Chat del partido</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal visible={friendPickerVisible} animationType="slide" onRequestClose={() => setFriendPickerVisible(false)}>
         <View style={styles.modalContainer}>

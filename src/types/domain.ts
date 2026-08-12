@@ -84,6 +84,9 @@ export interface PadelEvent extends TimeSlot {
   status: EventStatus;
   inviteLinkToken: string;
   createdAt: number;
+  // Ids de los anotados (incluye ambos miembros de una pareja), para el chat del partido:
+  // permite chequear membresía en las reglas de seguridad sin leer la subcolección de participantes.
+  participantUserIds: string[];
 }
 
 export interface EventParticipant {

@@ -61,6 +61,17 @@ service cloud.firestore {
         allow create: if isSignedIn();
         allow update, delete: if false; // las bajas de cupo se resuelven con lógica de servidor a futuro
       }
+
+      // Chat entre los anotados a este partido puntual (organizador incluido).
+      match /messages/{messageId} {
+        function isEventParticipant() {
+          let ev = get(/databases/$(database)/documents/events/$(eventId)).data;
+          return isSignedIn() && request.auth.uid in ev.participantUserIds;
+        }
+
+        allow read: if isEventParticipant();
+        allow create: if isEventParticipant() && request.resource.data.senderId == request.auth.uid;
+      }
     }
 
     match /courtPosts/{postId} {
