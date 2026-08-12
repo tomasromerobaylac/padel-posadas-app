@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useAuth } from '../src/auth/AuthContext';
+import { useAuth } from '../../src/auth/AuthContext';
 import {
   acceptFriendRequest,
   listFriends,
@@ -18,9 +18,9 @@ import {
   rejectFriendRequest,
   removeFriend,
   sendFriendRequest,
-} from '../src/data/friendsRepo';
-import { findUserByPhone, getUser } from '../src/data/usersRepo';
-import type { AppUser, FriendRequest } from '../src/types/domain';
+} from '../../src/data/friendsRepo';
+import { findUserByPhone, getUser } from '../../src/data/usersRepo';
+import type { AppUser, FriendRequest } from '../../src/types/domain';
 
 const PHONE_PREFIX = '+549';
 

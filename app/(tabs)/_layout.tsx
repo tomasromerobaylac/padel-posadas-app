@@ -4,6 +4,7 @@ export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: true }}>
       <Tabs.Screen name="index" options={{ title: 'Partidos' }} />
+      <Tabs.Screen name="friends" options={{ title: 'Amigos' }} />
       <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
     </Tabs>
   );
