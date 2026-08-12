@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
+import { getOrCreateChat } from '../../src/data/chatRepo';
 import { getClub } from '../../src/data/clubsRepo';
 import { getEvent, joinEvent, listParticipants } from '../../src/data/eventsRepo';
 import { listFriends } from '../../src/data/friendsRepo';
@@ -108,6 +109,16 @@ export default function EventDetailScreen() {
     }
   }
 
+  async function handleChatWithClub() {
+    if (!appUser || !club?.ownerUserId) return;
+    try {
+      const chat = await getOrCreateChat(club.id, club.ownerUserId, appUser.id);
+      router.push(`/chat/${chat.id}`);
+    } catch (err: any) {
+      Alert.alert('No se pudo abrir el chat', err?.message ?? 'Intentá de nuevo.');
+    }
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -173,6 +184,13 @@ export default function EventDetailScreen() {
           <Text style={[styles.buttonText, styles.buttonTextSecondary]}>Invitar amigo</Text>
         </TouchableOpacity>
       </View>
+      {club?.ownerUserId && club.ownerUserId !== appUser?.id && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={[styles.button, styles.buttonSecondary]} onPress={handleChatWithClub}>
+            <Text style={[styles.buttonText, styles.buttonTextSecondary]}>Chatear con el club</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal visible={friendPickerVisible} animationType="slide" onRequestClose={() => setFriendPickerVisible(false)}>
         <View style={styles.modalContainer}>

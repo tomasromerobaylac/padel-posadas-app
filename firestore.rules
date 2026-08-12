@@ -86,5 +86,26 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.fromUserId == request.auth.uid;
       allow update: if isSignedIn() && resource.data.toUserId == request.auth.uid;
     }
+
+    // Chat 1:1 entre un jugador y el dueño de un club (un solo hilo por club+jugador).
+    match /chats/{chatId} {
+      function isChatParticipant() {
+        return isSignedIn() && (resource.data.ownerUserId == request.auth.uid || resource.data.playerUserId == request.auth.uid);
+      }
+
+      allow read: if isChatParticipant();
+      allow create: if isSignedIn() && request.resource.data.playerUserId == request.auth.uid;
+      allow update: if isChatParticipant();
+
+      match /messages/{messageId} {
+        function isThreadParticipant() {
+          let chat = get(/databases/$(database)/documents/chats/$(chatId)).data;
+          return isSignedIn() && (chat.ownerUserId == request.auth.uid || chat.playerUserId == request.auth.uid);
+        }
+
+        allow read: if isThreadParticipant();
+        allow create: if isThreadParticipant() && request.resource.data.senderId == request.auth.uid;
+      }
+    }
   }
 }

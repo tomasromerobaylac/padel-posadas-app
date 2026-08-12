@@ -116,3 +116,22 @@ export interface Invite {
   status: InviteStatus;
   createdAt: number;
 }
+
+// Un chat por club+jugador (no por reserva puntual), así el jugador y el dueño
+// pueden coordinar cualquier turno en una sola conversación.
+export interface ChatThread {
+  id: string; // `${clubId}__${playerUserId}`
+  clubId: string;
+  ownerUserId: string;
+  playerUserId: string;
+  lastMessageText?: string;
+  lastMessageAt?: number;
+  createdAt: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  createdAt: number;
+}
