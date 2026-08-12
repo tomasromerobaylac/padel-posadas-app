@@ -22,9 +22,13 @@ export default function AdminScreen() {
   const [creatingClub, setCreatingClub] = useState(false);
 
   const load = useCallback(async () => {
-    const [pending, allClubs] = await Promise.all([listPendingClubOwnerRequests(), listClubs()]);
-    setRequests(pending);
-    setClubs(allClubs);
+    try {
+      const [pending, allClubs] = await Promise.all([listPendingClubOwnerRequests(), listClubs()]);
+      setRequests(pending);
+      setClubs(allClubs);
+    } catch {
+      // sesión cambiada u otro error transitorio
+    }
   }, []);
 
   useFocusEffect(

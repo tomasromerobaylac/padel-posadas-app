@@ -11,26 +11,47 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../src/auth/AuthContext';
-import { addFriend, listFriends, removeFriend } from '../src/data/friendsRepo';
+import {
+  acceptFriendRequest,
+  listFriends,
+  listIncomingFriendRequests,
+  rejectFriendRequest,
+  removeFriend,
+  sendFriendRequest,
+} from '../src/data/friendsRepo';
 import { findUserByPhone, getUser } from '../src/data/usersRepo';
-import type { AppUser } from '../src/types/domain';
+import type { AppUser, FriendRequest } from '../src/types/domain';
+
+const PHONE_PREFIX = '+549';
 
 export default function FriendsScreen() {
   const { appUser } = useAuth();
   const [friends, setFriends] = useState<(AppUser & { friendUserId: string })[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<(FriendRequest & { fromUser?: AppUser })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(PHONE_PREFIX);
   const [searching, setSearching] = useState(false);
 
   const load = useCallback(async () => {
     if (!appUser) return;
-    const links = await listFriends(appUser.id);
-    const users = await Promise.all(links.map((l) => getUser(l.friendUserId)));
-    setFriends(
-      users
-        .map((u, i) => (u ? { ...u, friendUserId: links[i].friendUserId } : null))
-        .filter((u): u is AppUser & { friendUserId: string } => u !== null)
-    );
+    try {
+      const [links, requests] = await Promise.all([
+        listFriends(appUser.id),
+        listIncomingFriendRequests(appUser.id),
+      ]);
+      const users = await Promise.all(links.map((l) => getUser(l.friendUserId)));
+      setFriends(
+        users
+          .map((u, i) => (u ? { ...u, friendUserId: links[i].friendUserId } : null))
+          .filter((u): u is AppUser & { friendUserId: string } => u !== null)
+      );
+      const withUsers = await Promise.all(
+        requests.map(async (r) => ({ ...r, fromUser: (await getUser(r.fromUserId)) ?? undefined }))
+      );
+      setIncomingRequests(withUsers);
+    } catch {
+      // sesión cambiada u otro error transitorio, no rompemos la pantalla
+    }
   }, [appUser]);
 
   useFocusEffect(
@@ -39,9 +60,9 @@ export default function FriendsScreen() {
     }, [load])
   );
 
-  async function handleAddFriend() {
+  async function handleSendRequest() {
     if (!appUser) return;
-    if (!phone.trim()) {
+    if (phone.trim() === PHONE_PREFIX || !phone.trim()) {
       Alert.alert('Ingresá un teléfono', 'Buscamos al jugador por su número.');
       return;
     }
@@ -56,14 +77,28 @@ export default function FriendsScreen() {
         Alert.alert('Ese sos vos', 'No te podés agregar a vos mismo.');
         return;
       }
-      await addFriend(appUser.id, found.id);
-      setPhone('');
-      await load();
+      if (friends.some((f) => f.friendUserId === found.id)) {
+        Alert.alert('Ya son amigos', 'Ese jugador ya está en tu lista.');
+        return;
+      }
+      await sendFriendRequest(appUser.id, found.id);
+      setPhone(PHONE_PREFIX);
+      Alert.alert('¡Listo!', `Le mandamos la solicitud a ${found.name}.`);
     } catch (err: any) {
-      Alert.alert('No se pudo agregar', err?.message ?? 'Intentá de nuevo.');
+      Alert.alert('No se pudo enviar la solicitud', err?.message ?? 'Intentá de nuevo.');
     } finally {
       setSearching(false);
     }
+  }
+
+  async function handleAccept(request: FriendRequest) {
+    await acceptFriendRequest(request);
+    await load();
+  }
+
+  async function handleReject(requestId: string) {
+    await rejectFriendRequest(requestId);
+    await load();
   }
 
   async function handleRemove(friendUserId: string) {
@@ -83,8 +118,8 @@ export default function FriendsScreen() {
           value={phone}
           onChangeText={setPhone}
         />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddFriend} disabled={searching}>
-          {searching ? <ActivityIndicator color="#fff" /> : <Text style={styles.addButtonText}>Agregar</Text>}
+        <TouchableOpacity style={styles.addButton} onPress={handleSendRequest} disabled={searching}>
+          {searching ? <ActivityIndicator color="#fff" /> : <Text style={styles.addButtonText}>Pedir</Text>}
         </TouchableOpacity>
       </View>
 
@@ -95,6 +130,29 @@ export default function FriendsScreen() {
           style={{ marginTop: 20 }}
           data={friends}
           keyExtractor={(item) => item.friendUserId}
+          ListHeaderComponent={
+            incomingRequests.length > 0 ? (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={styles.label}>Solicitudes recibidas</Text>
+                {incomingRequests.map((req) => (
+                  <View key={req.id} style={styles.requestRow}>
+                    <Text style={styles.friendName}>{req.fromUser?.name ?? 'Jugador'}</Text>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity style={styles.acceptButton} onPress={() => handleAccept(req)}>
+                        <Text style={styles.acceptButtonText}>Aceptar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReject(req.id)}>
+                        <Text style={styles.removeText}>Rechazar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+                <Text style={[styles.label, { marginTop: 20 }]}>Tus amigos</Text>
+              </View>
+            ) : (
+              <Text style={[styles.label, { marginBottom: 4 }]}>Tus amigos</Text>
+            )
+          }
           ListEmptyComponent={<Text style={styles.empty}>Todavía no agregaste amigos.</Text>}
           renderItem={({ item }) => (
             <View style={styles.friendRow}>
@@ -121,6 +179,16 @@ const styles = StyleSheet.create({
   addButton: { backgroundColor: '#1b7f3a', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
   addButtonText: { color: '#fff', fontWeight: '600' },
   empty: { color: '#888', fontSize: 13, marginTop: 8 },
+  requestRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  acceptButton: { backgroundColor: '#1b7f3a', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
+  acceptButtonText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   friendRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

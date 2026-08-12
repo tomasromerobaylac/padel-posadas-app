@@ -15,6 +15,7 @@ import { listClubs } from '../src/data/clubsRepo';
 import { categoryLabel } from '../src/utils/format';
 import type { Category, Club, Gender } from '../src/types/domain';
 
+const PHONE_PREFIX = '+549';
 const CATEGORIES: Category[] = [1, 2, 3, 4, 5, 6, 7, 8];
 const GENDERS: { value: Gender; label: string }[] = [
   { value: 'masculino', label: 'Masculino' },
@@ -25,7 +26,7 @@ const GENDERS: { value: Gender; label: string }[] = [
 export default function ProfileSetupScreen() {
   const { firebaseUser, refreshAppUser } = useAuth();
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(PHONE_PREFIX);
   const [gender, setGender] = useState<Gender>('masculino');
   const [categoryMin, setCategoryMin] = useState<Category>(6);
   const [categoryMax, setCategoryMax] = useState<Category>(6);
@@ -51,7 +52,7 @@ export default function ProfileSetupScreen() {
       Alert.alert('Falta tu nombre', 'Ingresá cómo querés que te vean los demás jugadores.');
       return;
     }
-    if (!phone.trim()) {
+    if (!phone.trim() || phone.trim() === PHONE_PREFIX) {
       Alert.alert('Falta tu teléfono', 'Lo van a necesitar los demás jugadores para coordinar por WhatsApp.');
       return;
     }

@@ -23,16 +23,20 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const [openEvents, openCourtPosts] = await Promise.all([getOpenEvents(), listOpenCourtPosts()]);
-    setEvents(openEvents.sort((a, b) => a.slotStart - b.slotStart));
-    setCourtPosts(openCourtPosts.sort((a, b) => a.slotStart - b.slotStart));
+    try {
+      const [openEvents, openCourtPosts] = await Promise.all([getOpenEvents(), listOpenCourtPosts()]);
+      setEvents(openEvents.sort((a, b) => a.slotStart - b.slotStart));
+      setCourtPosts(openCourtPosts.sort((a, b) => a.slotStart - b.slotStart));
 
-    if (appUser) {
-      const pending = await listInvitesForUser(appUser.id);
-      const withEvents = await Promise.all(
-        pending.map(async (inv) => ({ ...inv, eventInfo: (await getEvent(inv.eventId)) ?? undefined }))
-      );
-      setInvites(withEvents);
+      if (appUser) {
+        const pending = await listInvitesForUser(appUser.id);
+        const withEvents = await Promise.all(
+          pending.map(async (inv) => ({ ...inv, eventInfo: (await getEvent(inv.eventId)) ?? undefined }))
+        );
+        setInvites(withEvents);
+      }
+    } catch {
+      // Sesión cambiada u otro error transitorio: no rompemos la pantalla, el próximo refresh reintenta.
     }
   }, [appUser]);
 

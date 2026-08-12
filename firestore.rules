@@ -75,6 +75,12 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isOwner(friendId);
     }
 
+    match /friendRequests/{requestId} {
+      allow read: if isSignedIn() && (resource.data.fromUserId == request.auth.uid || resource.data.toUserId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.fromUserId == request.auth.uid && request.resource.data.status == 'pendiente';
+      allow update: if isSignedIn() && resource.data.toUserId == request.auth.uid;
+    }
+
     match /invites/{inviteId} {
       allow read: if isSignedIn() && (resource.data.fromUserId == request.auth.uid || resource.data.toUserId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.fromUserId == request.auth.uid;

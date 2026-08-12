@@ -39,16 +39,20 @@ export default function EventDetailScreen() {
   const [invitedIds, setInvitedIds] = useState<string[]>([]);
 
   const load = useCallback(async () => {
-    const ev = await getEvent(id);
-    setEvent(ev);
-    if (ev) {
-      const [c, parts] = await Promise.all([getClub(ev.clubId), listParticipants(ev.id)]);
-      setClub(c);
-      setParticipants(parts);
-      const names = await Promise.all(
-        parts.map(async (p) => (p.userId ? [p.userId, (await getUser(p.userId))?.name ?? p.userId] : null))
-      );
-      setParticipantNames(Object.fromEntries(names.filter((n): n is [string, string] => n !== null)));
+    try {
+      const ev = await getEvent(id);
+      setEvent(ev);
+      if (ev) {
+        const [c, parts] = await Promise.all([getClub(ev.clubId), listParticipants(ev.id)]);
+        setClub(c);
+        setParticipants(parts);
+        const names = await Promise.all(
+          parts.map(async (p) => (p.userId ? [p.userId, (await getUser(p.userId))?.name ?? p.userId] : null))
+        );
+        setParticipantNames(Object.fromEntries(names.filter((n): n is [string, string] => n !== null)));
+      }
+    } catch {
+      // sesión cambiada u otro error transitorio
     }
   }, [id]);
 

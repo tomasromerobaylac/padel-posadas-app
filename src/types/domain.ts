@@ -14,6 +14,7 @@ export type UserRole = 'player' | 'club_owner' | 'admin';
 export type ClubOwnerRequestStatus = 'pending' | 'approved' | 'rejected';
 export type ParticipantStatus = 'confirmado' | 'pendiente';
 export type InviteStatus = 'pendiente' | 'aceptada' | 'rechazada';
+export type FriendRequestStatus = 'pendiente' | 'aceptada' | 'rechazada';
 
 export interface AppUser {
   id: string;
@@ -97,6 +98,14 @@ export interface CourtPost extends TimeSlot {
 export interface FriendLink {
   friendUserId: string;
   since: number;
+}
+
+export interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  status: FriendRequestStatus;
+  createdAt: number;
 }
 
 export interface Invite {
