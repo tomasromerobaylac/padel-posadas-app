@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pádel Posadas</title>
+  <style>
+    body {
+      font-family: -apple-system, Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 24px;
+      max-width: 360px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    h1 { font-size: 22px; margin: 0 0 8px; color: #111; }
+    p { color: #555; font-size: 15px; line-height: 1.4; }
+    a.button {
+      display: inline-block;
+      margin-top: 20px;
+      background: #1b7f3a;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 14px 28px;
+      border-radius: 10px;
+    }
+    .hint { margin-top: 16px; font-size: 13px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Te invitaron a un partido 🎾</h1>
+    <p>Abrí Pádel Posadas para ver los detalles y sumarte.</p>
+    <a id="open-app" class="button" href="#">Abrir en la app</a>
+    <p class="hint">Si no se abre sola, tocá el botón de arriba.</p>
+  </div>
+  <script>
+    function getEventId() {
+      var parts = window.location.pathname.split('/').filter(Boolean);
+      return parts[parts.length - 1] || '';
+    }
+
+    var eventId = getEventId();
+    var deepLink = 'padelapp://event/' + eventId;
+
+    document.getElementById('open-app').setAttribute('href', deepLink);
+
+    // Intenta abrir la app automáticamente al cargar la página.
+    window.location.href = deepLink;
+  </script>
+</body>
+</html>
