@@ -48,6 +48,8 @@ export interface Club {
   description?: string;
   googleMapsUrl?: string;
   amenities?: ClubAmenities;
+  // Alias/CBU para transferencia directa (cada jugador paga su parte sin pasar por la cantina).
+  paymentAlias?: string;
 }
 
 export interface ClubOwnerRequest {

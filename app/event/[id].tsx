@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useAuth } from '../../src/auth/AuthContext';
 import { getOrCreateChat } from '../../src/data/chatRepo';
 import { getClub } from '../../src/data/clubsRepo';
@@ -109,6 +110,12 @@ export default function EventDetailScreen() {
     }
   }
 
+  async function handleCopyAlias() {
+    if (!club?.paymentAlias) return;
+    await Clipboard.setStringAsync(club.paymentAlias);
+    Alert.alert('Copiado', 'Alias copiado al portapapeles.');
+  }
+
   async function handleChatWithClub() {
     if (!appUser || !club?.ownerUserId) return;
     try {
@@ -154,6 +161,18 @@ export default function EventDetailScreen() {
       <Text style={styles.cupo}>
         Cupo: {event.filledSlots}/{event.totalSlots} {event.status === 'completo' ? '(completo)' : ''}
       </Text>
+
+      {club?.paymentAlias && (
+        <View style={styles.paymentBox}>
+          <Text style={styles.paymentLabel}>¿Pagás tu parte por transferencia?</Text>
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentAlias}>{club.paymentAlias}</Text>
+            <TouchableOpacity style={styles.copyButton} onPress={handleCopyAlias}>
+              <Text style={styles.copyButtonText}>Copiar alias</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>Anotados</Text>
       {participants.length === 0 && <Text style={styles.empty}>Todavía no se anotó nadie.</Text>}
@@ -245,6 +264,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cupo: { fontSize: 15, fontWeight: '600', marginTop: 14 },
+  paymentBox: {
+    backgroundColor: '#f3f0ff',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: '#e0d8fb',
+  },
+  paymentLabel: { fontSize: 13, fontWeight: '600', color: '#4a3f7a' },
+  paymentRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  paymentAlias: { fontSize: 15, fontWeight: '700', color: '#2d2456' },
+  copyButton: { backgroundColor: '#4a3f7a', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
+  copyButtonText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   sectionTitle: { fontSize: 17, fontWeight: '700', marginTop: 20, marginBottom: 6 },
   empty: { color: '#888', fontSize: 13 },
   participant: { fontSize: 14, color: '#333', marginTop: 2 },

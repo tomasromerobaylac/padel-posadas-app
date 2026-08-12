@@ -8,6 +8,7 @@ const DEFAULT_AMENITIES: ClubAmenities = { ventaAccesorios: false, parrillas: fa
 export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => void }) {
   const [description, setDescription] = useState(club.description ?? '');
   const [googleMapsUrl, setGoogleMapsUrl] = useState(club.googleMapsUrl ?? '');
+  const [paymentAlias, setPaymentAlias] = useState(club.paymentAlias ?? '');
   const [amenities, setAmenities] = useState<ClubAmenities>(club.amenities ?? DEFAULT_AMENITIES);
   const [saving, setSaving] = useState(false);
 
@@ -21,6 +22,7 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
       await updateClub(club.id, {
         description: description.trim(),
         googleMapsUrl: googleMapsUrl.trim(),
+        paymentAlias: paymentAlias.trim(),
         amenities,
       });
       onSaved();
@@ -50,6 +52,19 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
         value={googleMapsUrl}
         onChangeText={setGoogleMapsUrl}
       />
+
+      <Text style={styles.label}>Alias o CBU para transferencias</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="cancha.arena.mp"
+        autoCapitalize="none"
+        value={paymentAlias}
+        onChangeText={setPaymentAlias}
+      />
+      <Text style={[styles.hint, { marginTop: 4 }]}>
+        Si lo cargás, cada jugador va a poder copiarlo desde el partido y transferirte su parte
+        directo, sin pasar por la cantina.
+      </Text>
 
       <Text style={styles.label}>Servicios</Text>
       <View style={styles.chipsRow}>
