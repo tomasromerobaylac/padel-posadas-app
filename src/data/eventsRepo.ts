@@ -21,6 +21,12 @@ export async function getOpenEvents(): Promise<PadelEvent[]> {
   return snap.docs.map((d) => d.data());
 }
 
+export async function listEventsByClub(clubId: string): Promise<PadelEvent[]> {
+  const q = query(typedCollection<PadelEvent>(path), where('clubId', '==', clubId));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => d.data());
+}
+
 export async function getEvent(eventId: string): Promise<PadelEvent | null> {
   const snap = await getDoc(typedDoc<PadelEvent>(path, eventId));
   return snap.exists() ? snap.data() : null;

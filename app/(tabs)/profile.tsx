@@ -35,6 +35,12 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       )}
 
+      {appUser.role === 'club_owner' && (
+        <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/owner')}>
+          <Text style={styles.linkButtonText}>Mi cancha</Text>
+        </TouchableOpacity>
+      )}
+
       {appUser.role === 'admin' && (
         <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/admin')}>
           <Text style={styles.linkButtonText}>Panel de admin</Text>

@@ -10,6 +10,12 @@ export async function listOpenCourtPosts(): Promise<CourtPost[]> {
   return snap.docs.map((d) => d.data());
 }
 
+export async function listCourtPostsByClub(clubId: string): Promise<CourtPost[]> {
+  const q = query(typedCollection<CourtPost>(path), where('clubId', '==', clubId));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => d.data());
+}
+
 export async function createCourtPost(post: Omit<CourtPost, 'id' | 'createdAt'>): Promise<string> {
   const ref = await addDoc(typedCollection<CourtPost>(path), {
     ...post,
