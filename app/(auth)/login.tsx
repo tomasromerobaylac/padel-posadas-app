@@ -1,5 +1,18 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
+  View,
+} from 'react-native';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../src/firebase/config';
 
@@ -30,42 +43,56 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Pádel Posadas</Text>
-      <Text style={styles.subtitle}>
-        {mode === 'login' ? 'Ingresá con tu email' : 'Creá tu cuenta con email y contraseña'}
-      </Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <Text style={styles.title}>Pádel Posadas</Text>
+          <Text style={styles.subtitle}>
+            {mode === 'login' ? 'Ingresá con tu email' : 'Creá tu cuenta con email y contraseña'}
+          </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="tu@email.com"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="tu@email.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            returnKeyType="next"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña"
+            secureTextEntry
+            returnKeyType="done"
+            value={password}
+            onChangeText={setPassword}
+            onSubmitEditing={handleSubmit}
+          />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>
-        {submitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>{mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</Text>
-        )}
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>
+            {submitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>{mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</Text>
+            )}
+          </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
-        <Text style={styles.switchText}>
-          {mode === 'login' ? '¿No tenés cuenta? Creá una' : '¿Ya tenés cuenta? Ingresá'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+          <TouchableOpacity onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
+            <Text style={styles.switchText}>
+              {mode === 'login' ? '¿No tenés cuenta? Creá una' : '¿Ya tenés cuenta? Ingresá'}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -87,7 +114,7 @@ function translateAuthError(code?: string): string {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
+  container: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 12 },
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 24 },
   input: {
