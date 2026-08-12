@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../src/firebase/config';
+import { getEmailByPhone } from '../../src/data/usersRepo';
 
 export default function LoginScreen() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -23,16 +24,22 @@ export default function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
-    if (!email.trim() || !password) {
-      Alert.alert('Faltan datos', 'Ingresá tu email y contraseña.');
+    const identifier = email.trim();
+    if (!identifier || !password) {
+      Alert.alert('Faltan datos', mode === 'login' ? 'Ingresá tu email o teléfono y contraseña.' : 'Ingresá tu email y contraseña.');
       return;
     }
     setSubmitting(true);
     try {
       if (mode === 'login') {
-        await signInWithEmailAndPassword(auth, email.trim(), password);
+        const loginEmail = identifier.includes('@') ? identifier : await resolveEmailFromPhone(identifier);
+        if (!loginEmail) {
+          Alert.alert('No encontrado', 'No hay ninguna cuenta registrada con ese teléfono.');
+          return;
+        }
+        await signInWithEmailAndPassword(auth, loginEmail, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email.trim(), password);
+        await createUserWithEmailAndPassword(auth, identifier, password);
       }
       // La navegación post-login la resuelve el AuthGate en app/_layout.tsx
     } catch (err: any) {
@@ -40,6 +47,10 @@ export default function LoginScreen() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function resolveEmailFromPhone(phone: string): Promise<string | null> {
+    return getEmailByPhone(phone);
   }
 
   return (
@@ -55,13 +66,13 @@ export default function LoginScreen() {
         >
           <Text style={styles.title}>Pádel Posadas</Text>
           <Text style={styles.subtitle}>
-            {mode === 'login' ? 'Ingresá con tu email' : 'Creá tu cuenta con email y contraseña'}
+            {mode === 'login' ? 'Ingresá con tu email o teléfono' : 'Creá tu cuenta con email y contraseña'}
           </Text>
 
           <TextInput
             style={styles.input}
-            placeholder="tu@email.com"
-            keyboardType="email-address"
+            placeholder={mode === 'login' ? 'tu@email.com o +54 9 3764 501234' : 'tu@email.com'}
+            keyboardType={mode === 'login' ? 'default' : 'email-address'}
             autoCapitalize="none"
             returnKeyType="next"
             value={email}

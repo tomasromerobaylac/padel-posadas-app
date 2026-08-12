@@ -108,6 +108,15 @@ service cloud.firestore {
       }
     }
 
+    // Mapa teléfono -> email para poder resolver el login por teléfono ANTES de
+    // autenticarse (no se puede leer /users sin estar logueado). Solo guarda el
+    // email, nada más sensible. Cada usuario solo puede escribir una entrada que
+    // apunte a su propio email autenticado.
+    match /phoneDirectory/{phone} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.resource.data.email == request.auth.token.email;
+    }
+
     // Chat 1:1 entre dos amigos.
     match /directChats/{chatId} {
       function isDirectParticipant() {

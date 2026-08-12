@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../src/auth/AuthContext';
-import { createUser } from '../src/data/usersRepo';
+import { createUser, setPhoneDirectoryEntry } from '../src/data/usersRepo';
 import { listClubs } from '../src/data/clubsRepo';
 import { categoryLabel } from '../src/utils/format';
 import type { Category, Club, Gender } from '../src/types/domain';
@@ -66,6 +66,7 @@ export default function ProfileSetupScreen() {
       await createUser({
         id: firebaseUser.uid,
         name: name.trim(),
+        email: firebaseUser.email ?? '',
         phone: phone.trim(),
         category: { min: categoryMin, max: categoryMax },
         gender,
@@ -73,6 +74,9 @@ export default function ProfileSetupScreen() {
         role: 'player',
         createdAt: Date.now(),
       });
+      if (firebaseUser.email) {
+        await setPhoneDirectoryEntry(phone.trim(), firebaseUser.email);
+      }
       await refreshAppUser();
     } catch (err: any) {
       Alert.alert('No se pudo guardar tu perfil', err?.message ?? 'Intentá de nuevo.');
