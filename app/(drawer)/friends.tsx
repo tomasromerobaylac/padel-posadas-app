@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +11,8 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
+import { Avatar } from '../../src/components/Avatar';
+import { getOrCreateDirectChat } from '../../src/data/directChatRepo';
 import {
   acceptFriendRequest,
   listFriends,
@@ -26,6 +28,7 @@ const PHONE_PREFIX = '+549';
 
 export default function FriendsScreen() {
   const { appUser } = useAuth();
+  const router = useRouter();
   const [friends, setFriends] = useState<(AppUser & { friendUserId: string })[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<(FriendRequest & { fromUser?: AppUser })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,6 +110,12 @@ export default function FriendsScreen() {
     await load();
   }
 
+  async function handleOpenChat(friendUserId: string) {
+    if (!appUser) return;
+    const chat = await getOrCreateDirectChat(appUser.id, friendUserId);
+    router.push(`/dm/${chat.id}`);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Agregar amigo por teléfono</Text>
@@ -155,15 +164,18 @@ export default function FriendsScreen() {
           }
           ListEmptyComponent={<Text style={styles.empty}>Todavía no agregaste amigos.</Text>}
           renderItem={({ item }) => (
-            <View style={styles.friendRow}>
-              <View>
-                <Text style={styles.friendName}>{item.name}</Text>
-                <Text style={styles.friendPhone}>{item.phone}</Text>
+            <TouchableOpacity style={styles.friendRow} onPress={() => handleOpenChat(item.friendUserId)}>
+              <View style={styles.friendInfo}>
+                <Avatar name={item.name} photoUrl={item.photoUrl} />
+                <View>
+                  <Text style={styles.friendName}>{item.name}</Text>
+                  <Text style={styles.friendPhone}>{item.phone}</Text>
+                </View>
               </View>
               <TouchableOpacity onPress={() => handleRemove(item.friendUserId)}>
                 <Text style={styles.removeText}>Quitar</Text>
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           )}
         />
       )}
@@ -197,6 +209,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
+  friendInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   friendName: { fontSize: 16, fontWeight: '600' },
   friendPhone: { fontSize: 13, color: '#666' },
   removeText: { color: '#c0392b', fontWeight: '600' },

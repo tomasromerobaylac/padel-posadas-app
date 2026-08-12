@@ -146,3 +146,12 @@ export interface ChatMessage {
   text: string;
   createdAt: number;
 }
+
+// Chat 1:1 entre dos amigos (distinto del chat con el dueño de cancha).
+export interface DirectChatThread {
+  id: string; // `${menorId}__${mayorId}` (ids ordenados alfabéticamente)
+  participantIds: [string, string];
+  lastMessageText?: string;
+  lastMessageAt?: number;
+  createdAt: number;
+}
