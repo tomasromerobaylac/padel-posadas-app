@@ -1,4 +1,4 @@
-import { addDoc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { typedCollection, typedDoc } from './firestoreHelpers';
 import { createClub } from './clubsRepo';
 import { updateUser } from './usersRepo';
@@ -6,10 +6,21 @@ import type { ClubOwnerRequest } from '../types/domain';
 
 const path = 'clubOwnerRequests';
 
+/**
+ * Una sola solicitud por cuenta (el id del documento es el userId del solicitante),
+ * para que no se puedan mandar decenas de solicitudes fantasma desde la misma cuenta.
+ * Si la anterior fue rechazada, se puede volver a enviar (pisa el mismo documento).
+ */
+export async function getClubOwnerRequestForUser(userId: string): Promise<ClubOwnerRequest | null> {
+  const snap = await getDoc(typedDoc<ClubOwnerRequest>(path, userId));
+  return snap.exists() ? snap.data() : null;
+}
+
 export async function submitClubOwnerRequest(
   request: Omit<ClubOwnerRequest, 'id' | 'status' | 'createdAt'>
 ): Promise<string> {
-  const ref = await addDoc(typedCollection<ClubOwnerRequest>(path), {
+  const ref = typedDoc<ClubOwnerRequest>(path, request.requesterUserId);
+  await setDoc(ref, {
     ...request,
     status: 'pending',
     createdAt: Date.now(),

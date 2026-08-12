@@ -42,11 +42,19 @@ service cloud.firestore {
     }
 
     // Cualquier usuario autenticado puede solicitar sumar su cancha; solo admin revisa.
-    match /clubOwnerRequests/{requestId} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.requesterUserId == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.requesterUserId == request.auth.uid
+    // El id del documento es el propio userId: como máximo una solicitud activa por
+    // cuenta, para que no se puedan mandar solicitudes fantasma en cadena.
+    match /clubOwnerRequests/{requesterUserId} {
+      allow read: if isAdmin() || (isSignedIn() && requesterUserId == request.auth.uid);
+      allow create: if isSignedIn() && requesterUserId == request.auth.uid
+        && request.resource.data.requesterUserId == request.auth.uid
         && request.resource.data.status == 'pending';
-      allow update: if isAdmin();
+      // Solo se puede reenviar (pisando el mismo doc) si la anterior fue rechazada.
+      allow update: if isAdmin()
+        || (isSignedIn() && requesterUserId == request.auth.uid
+            && resource.data.status == 'rejected'
+            && request.resource.data.requesterUserId == request.auth.uid
+            && request.resource.data.status == 'pending');
     }
 
     match /events/{eventId} {
