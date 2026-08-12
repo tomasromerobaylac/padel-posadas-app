@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider, useAuth } from '../src/auth/AuthContext';
 
@@ -46,11 +47,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <AuthGate>
-        <Stack screenOptions={{ headerShown: false }} />
-      </AuthGate>
-      <StatusBar style="auto" />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <AuthGate>
+          <Stack screenOptions={{ headerShown: false }} />
+        </AuthGate>
+        <StatusBar style="auto" />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

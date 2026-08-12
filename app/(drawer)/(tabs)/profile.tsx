@@ -1,8 +1,8 @@
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
-import { auth } from '../../src/firebase/config';
-import { useAuth } from '../../src/auth/AuthContext';
+import { auth } from '../../../src/firebase/config';
+import { useAuth } from '../../../src/auth/AuthContext';
 
 export default function ProfileScreen() {
   const { appUser } = useAuth();

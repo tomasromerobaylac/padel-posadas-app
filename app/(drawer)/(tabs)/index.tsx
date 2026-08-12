@@ -1,15 +1,15 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useAuth } from '../../src/auth/AuthContext';
-import { useClubsById } from '../../src/data/clubsCache';
-import { getEvent, getOpenEvents, joinEvent } from '../../src/data/eventsRepo';
-import { listOpenCourtPosts } from '../../src/data/courtPostsRepo';
-import { listInvitesForUser, respondInvite } from '../../src/data/invitesRepo';
-import { EventCard } from '../../src/components/EventCard';
-import { CourtPostCard } from '../../src/components/CourtPostCard';
-import { formatSlot } from '../../src/utils/format';
-import type { CourtPost, Invite, PadelEvent } from '../../src/types/domain';
+import { useAuth } from '../../../src/auth/AuthContext';
+import { useClubsById } from '../../../src/data/clubsCache';
+import { getEvent, getOpenEvents, joinEvent } from '../../../src/data/eventsRepo';
+import { listOpenCourtPosts } from '../../../src/data/courtPostsRepo';
+import { listInvitesForUser, respondInvite } from '../../../src/data/invitesRepo';
+import { EventCard } from '../../../src/components/EventCard';
+import { CourtPostCard } from '../../../src/components/CourtPostCard';
+import { formatSlot } from '../../../src/utils/format';
+import type { CourtPost, Invite, PadelEvent } from '../../../src/types/domain';
 
 export default function HomeScreen() {
   const { appUser } = useAuth();
