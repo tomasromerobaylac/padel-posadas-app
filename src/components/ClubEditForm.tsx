@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { updateClub } from '../data/clubsRepo';
+import { uploadImageToImgbb } from '../data/imageUpload';
 import type { Club, ClubAmenities } from '../types/domain';
 
 const DEFAULT_AMENITIES: ClubAmenities = { ventaAccesorios: false, parrillas: false, cantina: false };
@@ -13,9 +15,35 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
   const [pricePerSlot, setPricePerSlot] = useState(club.pricePerSlot ? String(club.pricePerSlot) : '');
   const [amenities, setAmenities] = useState<ClubAmenities>(club.amenities ?? DEFAULT_AMENITIES);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   function toggleAmenity(key: keyof ClubAmenities) {
     setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  async function handlePickPhoto() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permiso necesario', 'Necesitamos acceso a tus fotos para poder subir la imagen del club.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.5,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]?.base64) return;
+
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadImageToImgbb(result.assets[0].base64);
+      setPhotoUrl(url);
+    } catch (err: any) {
+      Alert.alert('No se pudo subir la foto', err?.message ?? 'Intentá de nuevo.');
+    } finally {
+      setUploadingPhoto(false);
+    }
   }
 
   async function handleSave() {
@@ -58,23 +86,14 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
       />
 
       <Text style={styles.label}>Foto del club</Text>
-      <View style={styles.photoHelpBox}>
-        <Text style={styles.photoHelpText}>
-          1. Tocá el botón de abajo para subir una foto (es gratis, sin registrarte).{'\n'}
-          2. Cuando termine de subir, copiá el "Direct link".{'\n'}
-          3. Volvé acá y pegalo en el campo de abajo.
-        </Text>
-        <TouchableOpacity style={styles.photoHelpButton} onPress={() => Linking.openURL('https://imgbb.com')}>
-          <Text style={styles.photoHelpButtonText}>Subir foto en ImgBB →</Text>
-        </TouchableOpacity>
-      </View>
-      <TextInput
-        style={styles.input}
-        placeholder="Pegá acá el link directo de la foto"
-        autoCapitalize="none"
-        value={photoUrl}
-        onChangeText={setPhotoUrl}
-      />
+      {photoUrl ? <Image source={{ uri: photoUrl }} style={styles.photoPreview} resizeMode="cover" /> : null}
+      <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto} disabled={uploadingPhoto}>
+        {uploadingPhoto ? (
+          <ActivityIndicator color="#4a3f7a" />
+        ) : (
+          <Text style={styles.photoButtonText}>{photoUrl ? 'Cambiar foto' : 'Elegir foto'}</Text>
+        )}
+      </TouchableOpacity>
 
       <Text style={styles.label}>Precio del turno ({club.slotDurationMinutes} min)</Text>
       <TextInput
@@ -142,16 +161,17 @@ const styles = StyleSheet.create({
   chipText: { color: '#333', fontSize: 13 },
   chipTextSelected: { color: '#fff', fontWeight: '600' },
   hint: { fontSize: 12, color: '#999', marginTop: 20, fontStyle: 'italic' },
-  photoHelpBox: {
+  photoPreview: { width: '100%', height: 160, borderRadius: 12, marginTop: 6 },
+  photoButton: {
     backgroundColor: '#f3f0ff',
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 6,
-    gap: 10,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#e0d8fb',
   },
-  photoHelpText: { fontSize: 12, color: '#4a3f7a', lineHeight: 18 },
-  photoHelpButton: { backgroundColor: '#4a3f7a', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-  photoHelpButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  photoButtonText: { color: '#4a3f7a', fontWeight: '700', fontSize: 13 },
   saveButton: { backgroundColor: '#1b7f3a', borderRadius: 10, paddingVertical: 14, marginTop: 16, alignItems: 'center' },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
