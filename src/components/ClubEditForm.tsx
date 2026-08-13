@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { updateClub } from '../data/clubsRepo';
 import type { Club, ClubAmenities } from '../types/domain';
 
@@ -58,17 +58,23 @@ export function ClubEditForm({ club, onSaved }: { club: Club; onSaved: () => voi
       />
 
       <Text style={styles.label}>Foto del club</Text>
+      <View style={styles.photoHelpBox}>
+        <Text style={styles.photoHelpText}>
+          1. Tocá el botón de abajo para subir una foto (es gratis, sin registrarte).{'\n'}
+          2. Cuando termine de subir, copiá el "Direct link".{'\n'}
+          3. Volvé acá y pegalo en el campo de abajo.
+        </Text>
+        <TouchableOpacity style={styles.photoHelpButton} onPress={() => Linking.openURL('https://imgbb.com')}>
+          <Text style={styles.photoHelpButtonText}>Subir foto en ImgBB →</Text>
+        </TouchableOpacity>
+      </View>
       <TextInput
         style={styles.input}
-        placeholder="Pegá el link de una foto (Google Fotos, Drive, etc.)"
+        placeholder="Pegá acá el link directo de la foto"
         autoCapitalize="none"
         value={photoUrl}
         onChangeText={setPhotoUrl}
       />
-      <Text style={[styles.hint, { marginTop: 4 }]}>
-        Por ahora no se puede subir la foto directo desde la app (requiere plan pago de Firebase). Subila a Google
-        Fotos, Drive o similar, generá un link público y pegalo acá.
-      </Text>
 
       <Text style={styles.label}>Precio del turno ({club.slotDurationMinutes} min)</Text>
       <TextInput
@@ -136,6 +142,16 @@ const styles = StyleSheet.create({
   chipText: { color: '#333', fontSize: 13 },
   chipTextSelected: { color: '#fff', fontWeight: '600' },
   hint: { fontSize: 12, color: '#999', marginTop: 20, fontStyle: 'italic' },
+  photoHelpBox: {
+    backgroundColor: '#f3f0ff',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 6,
+    gap: 10,
+  },
+  photoHelpText: { fontSize: 12, color: '#4a3f7a', lineHeight: 18 },
+  photoHelpButton: { backgroundColor: '#4a3f7a', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+  photoHelpButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   saveButton: { backgroundColor: '#1b7f3a', borderRadius: 10, paddingVertical: 14, marginTop: 16, alignItems: 'center' },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
